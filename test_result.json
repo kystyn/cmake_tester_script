@@ -51,7 +51,10 @@
             "results": [
                 {
                     "status": "FAILED",
-                    "failure": "Required regular expression not found.Regex=[Error! "
+                    "failure": {
+                        "@class": "org.jetbrains.research.runner.data.UnknownFailureDatum",
+                        "nestedException": "Required regular expression not found.Regex=[Error! "
+                    }
                 }
             ]
         }
