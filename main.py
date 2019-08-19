@@ -58,7 +58,8 @@ ARGUMENTS:
     - target for executable
     (relatively to script path):
         target
-RETURNS: None
+RETURNS:
+    return code of build
 '''
 def build( root, target ):
     base = os.path.abspath(os.curdir)
@@ -67,8 +68,9 @@ def build( root, target ):
         os.mkdir(target)
     subprocess.run(["cmake -B " + target + " -G " + generatorCMakeParam], shell = True)
     os.chdir(target)
-    subprocess.run([generator], shell = True)
+    status = subprocess.run([generator], shell = True)
     os.chdir(base)
+    return status.returncode
 
 '''
 Edit CMakeLists file of student due to include tests function.
@@ -195,10 +197,14 @@ def main():
     updateRepo(testAddr, testDir)
     updateRepo(studentAddr, studentDir)
     includeTests()
-    build(studentDir, buildDir)
+    status = build(studentDir, buildDir)
+    if status != 0:
+        clear()
+        return status
     runTest(studentDir + '/' + buildDir, logName)
     parseRes = parseLog(studentDir + '/' + buildDir, logName)
     genJson(jsonFile, parseRes)
     clear()
+    return 0
 
 main()
