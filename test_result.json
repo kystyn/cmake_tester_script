@@ -1,0 +1,59 @@
+{
+    "data": [
+        {
+            "packageName": "lesson",
+            "methodName": "FirstTest",
+            "tags": [],
+            "results": [
+                {
+                    "status": "SUCCESSFUL",
+                    "failure": null
+                }
+            ]
+        },
+        {
+            "packageName": "lesson",
+            "methodName": "SecondTest",
+            "tags": [],
+            "results": [
+                {
+                    "status": "SUCCESSFUL",
+                    "failure": null
+                }
+            ]
+        },
+        {
+            "packageName": "lesson",
+            "methodName": "ThirdTest",
+            "tags": [],
+            "results": [
+                {
+                    "status": "SUCCESSFUL",
+                    "failure": null
+                }
+            ]
+        },
+        {
+            "packageName": "lesson",
+            "methodName": "Test4",
+            "tags": [],
+            "results": [
+                {
+                    "status": "SUCCESSFUL",
+                    "failure": null
+                }
+            ]
+        },
+        {
+            "packageName": "lesson",
+            "methodName": "Test5",
+            "tags": [],
+            "results": [
+                {
+                    "status": "FAILED",
+                    "failure": "Required regular expression not found.Regex=[Error! "
+                }
+            ]
+        }
+    ]
+}

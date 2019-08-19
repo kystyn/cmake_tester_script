@@ -1,5 +1,6 @@
 import subprocess
 import os
+import json
 
 testAddr = 'git@github.com:kystyn/cmake_tester.git'
 testDir = 'test'
@@ -11,6 +12,8 @@ buildDir = 'build'
 
 generatorCMakeParam = 'Ninja'
 generator = 'ninja'
+
+packageName = 'lesson'
 
 def updateRepo( repoAddress, repoDir ):
     base = os.path.abspath(os.curdir)
@@ -38,7 +41,6 @@ def build( root, target ):
 
 def includeTests():
     base = os.path.abspath(os.curdir)
-    print(base)
     cmakefile = open(studentDir + '/CMakeLists.txt', 'a')
     cmakefile.write('include(' + base + '/' + testDir + '/CMakeLists.txt)')
     cmakefile.close()
@@ -57,12 +59,60 @@ def test( pathToExecutable, log ):
     subprocess.run(["ctest -O " + log], shell = True)
     os.chdir(base)
 
+def parseLog( pathToExecutable, logName ):
+    base = os.path.abspath(os.curdir)
+    os.chdir(pathToExecutable)
+    log = open(logName, 'rt')
+
+    testNo = 1
+    testRes = {}
+    nestedException = []
+    for string in log:
+        found = string.find('Test #' + str(testNo))
+        if found != -1:
+            testNo += 1
+            splittedStr = string.split()
+            curTestName = splittedStr[3]
+
+            if string.find('Passed') != -1:
+                curTestRes = True
+            else:
+                curTestRes = False
+                nestedException.append(''.join([splittedStr[i] + ' ' for i in range(5, len(splittedStr))]))
+            testRes.update({curTestName: curTestRes})
+
+    os.chdir(base)
+    return [testRes, nestedException]
+
+# parseRes == [testRes, nestedException]
+def genJson( fileName, parseRes ):
+    outJson = {"data": []}
+    outF = open(fileName, 'wt')
+
+    failMsgNum = 0
+    for testRes in parseRes[0].items():
+        str = {
+            "packageName": packageName,
+            "methodName": testRes[0],
+            "tags": [],
+            "results": [{
+                "status": "SUCCESSFUL" if testRes[1] else "FAILED",
+                "failure": parseRes[1][failMsgNum] if not testRes[1] else None
+            }]
+        }
+        failMsgNum += int(not testRes[1])
+        outJson['data'].append(str)
+    outF.write(json.dumps(outJson, indent = 4))
+    outF.close()
+
 def main():
     updateRepo(testAddr, testDir)
     updateRepo(studentAddr, studentDir)
     includeTests()
     build(studentDir, buildDir)
     test(studentDir + '/' + buildDir, "log.txt")
+    parseRes = parseLog(studentDir + '/' + buildDir, "log.txt")
+    genJson("test_result.json", parseRes)
     clear()
 
 main()
