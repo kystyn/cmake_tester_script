@@ -1,7 +1,7 @@
 import subprocess
 import os
 import json
-
+import sys
 
 '''
 All paths here, excepting `buildDir` and logName,
@@ -9,10 +9,9 @@ are relative to script directory.
 `buildDir` is relative to source code directory.
 `logName` is relative to executable directory.
 '''
-testAddr = 'git@github.com:kystyn/cmake_tester.git'
+testAddr = 'https://github.com/kystyn/cmake_tester.git'
 testDir = 'test'
 
-studentAddr = 'git@github.com:kystyn/cmake_student.git'
 studentDir = 'student'
 
 buildDir = 'build'
@@ -23,7 +22,9 @@ generator = 'ninja'
 packageName = 'lesson'
 
 logName = 'log.txt'
-jsonFile = 'test_result.json'
+jsonFile = 'result.json'
+
+branch = 'master'
 
 '''
 Update (or init, if wasn't) repository function.
@@ -35,17 +36,17 @@ ARGUMENTS:
         repoDir
 RETURNS: None
 '''
-def updateRepo( repoAddress, repoDir ):
+def updateRepo( repoAddress, repoDir, revision = '' ):
     base = os.path.abspath(os.curdir)
     if not os.path.exists(repoDir):
         os.mkdir(repoDir)
         os.chdir(repoDir)
         subprocess.run(["git init"], shell = True)
         subprocess.run(["git remote add origin " + repoAddress], shell = True)
-        subprocess.run(["git pull origin master"], shell = True)
     else:
         os.chdir(repoDir)
-        subprocess.run(["git pull origin master"], shell = True)
+    subprocess.run(["git pull origin " + branch], shell = True)
+    subprocess.run(["git checkout " + revision], shell = True)
     os.chdir(base)
 
 # root and is relative to current file
@@ -169,10 +170,15 @@ def genJson( fileName, parseRes ):
 
     failMsgNum = 0
     for testRes in parseRes[0].items():
+        tagEndIdx = testRes[0].find('_')
+        if tagEndIdx == -1:
+            raise RuntimeError
+        curTagName = testRes[0][0: tagEndIdx]
+        curTestName = testRes[0][tagEndIdx + 1:]
         str = {
             "packageName": packageName,
-            "methodName": testRes[0],
-            "tags": [],
+            "methodName": curTestName,
+            "tags": [curTagName],
             "results": [{
                 "status": "SUCCESSFUL" if testRes[1] else "FAILED",
                 "failure": {
@@ -194,8 +200,14 @@ RETURNS:
     1 if failed compilation.
 '''
 def main():
+    if len(sys.argv) < 2:
+        raise RuntimeError
+    studentAddr = sys.argv[1]
     updateRepo(testAddr, testDir)
-    updateRepo(studentAddr, studentDir)
+    if len(sys.argv) == 3:
+        updateRepo(studentAddr, studentDir, sys.argv[2])
+    else:
+        updateRepo(studentAddr, studentDir)
     includeTests()
     status = build(studentDir, buildDir)
     if status != 0:

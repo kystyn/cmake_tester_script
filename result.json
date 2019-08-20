@@ -3,7 +3,9 @@
         {
             "packageName": "lesson",
             "methodName": "FirstTest",
-            "tags": [],
+            "tags": [
+                "Trivial"
+            ],
             "results": [
                 {
                     "status": "SUCCESSFUL",
@@ -14,7 +16,9 @@
         {
             "packageName": "lesson",
             "methodName": "SecondTest",
-            "tags": [],
+            "tags": [
+                "Normal"
+            ],
             "results": [
                 {
                     "status": "SUCCESSFUL",
@@ -25,7 +29,9 @@
         {
             "packageName": "lesson",
             "methodName": "ThirdTest",
-            "tags": [],
+            "tags": [
+                "Easy"
+            ],
             "results": [
                 {
                     "status": "SUCCESSFUL",
@@ -36,7 +42,9 @@
         {
             "packageName": "lesson",
             "methodName": "Test4",
-            "tags": [],
+            "tags": [
+                "Hard"
+            ],
             "results": [
                 {
                     "status": "SUCCESSFUL",
@@ -47,7 +55,9 @@
         {
             "packageName": "lesson",
             "methodName": "Test5",
-            "tags": [],
+            "tags": [
+                "Impossible"
+            ],
             "results": [
                 {
                     "status": "FAILED",
