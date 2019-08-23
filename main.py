@@ -22,9 +22,14 @@ generator = 'ninja'
 packageName = 'lesson'
 
 logName = 'log.txt'
-jsonFile = 'result.json'
+jsonFile = 'results.json'
 
 branch = 'master'
+
+def run( command, sendException = True ):
+    status = subprocess.run([command], shell = True)
+    if status.returncode != 0 and sendException:
+        raise RuntimeError
 
 '''
 Update (or init, if wasn't) repository function.
@@ -41,12 +46,12 @@ def updateRepo( repoAddress, repoDir, revision = '' ):
     if not os.path.exists(repoDir):
         os.mkdir(repoDir)
         os.chdir(repoDir)
-        subprocess.run(["git init"], shell = True)
-        subprocess.run(["git remote add origin " + repoAddress], shell = True)
+        run("git init")
+        run("git remote add origin " + repoAddress)
     else:
         os.chdir(repoDir)
-    subprocess.run(["git pull origin " + branch], shell = True)
-    subprocess.run(["git checkout " + revision], shell = True)
+    run("git pull origin " + branch)
+    run("git checkout " + revision)
     os.chdir(base)
 
 # root and is relative to current file
@@ -67,11 +72,11 @@ def build( root, target ):
     os.chdir(root)
     if not os.path.exists(target):
         os.mkdir(target)
-    subprocess.run(["cmake -B " + target + " -G " + generatorCMakeParam], shell = True)
+    run("cmake -B " + target + " -G " + generatorCMakeParam)
+
     os.chdir(target)
-    status = subprocess.run([generator], shell = True)
+    subprocess.run(generator)
     os.chdir(base)
-    return status.returncode
 
 '''
 Edit CMakeLists file of student due to include tests function.
@@ -92,10 +97,12 @@ RETURNS: None
 '''
 def clear():
     base = os.path.abspath(os.curdir)
-    os.chdir(studentDir)
-    subprocess.run(["git stash"], shell = True)
-    os.chdir(base + '/' + testDir)
-    subprocess.run(["git stash"], shell = True)
+    if os.path.exists(studentDir):
+        os.chdir(studentDir)
+        run("git stash")
+    if os.path.exists(base + '/' + testDir):
+        os.chdir(base + '/' + testDir)
+        run("git stash")
     os.chdir(base)
 
 '''
@@ -112,7 +119,7 @@ RETURNS: None
 def runTest( pathToExecutable, logName ):
     base = os.path.abspath(os.curdir)
     os.chdir(pathToExecutable)
-    subprocess.run(["ctest -O " + logName], shell = True)
+    run("ctest -O " + logName, sendException = False)
     os.chdir(base)
 
 '''
@@ -200,23 +207,27 @@ RETURNS:
     1 if failed compilation.
 '''
 def main():
-    if len(sys.argv) < 2:
-        raise RuntimeError
-    studentAddr = sys.argv[1]
-    updateRepo(testAddr, testDir)
-    if len(sys.argv) == 3:
-        updateRepo(studentAddr, studentDir, sys.argv[2])
-    else:
-        updateRepo(studentAddr, studentDir)
-    includeTests()
-    status = build(studentDir, buildDir)
-    if status != 0:
+    try:
+        base = os.path.abspath(os.curdir)
+        if len(sys.argv) < 2:
+            raise RuntimeError
+        studentAddr = sys.argv[1]
+        updateRepo(testAddr, testDir)
+        if len(sys.argv) == 3:
+            updateRepo(studentAddr, studentDir, sys.argv[2])
+        else:
+            updateRepo(studentAddr, studentDir)
+        includeTests()
+        build(studentDir, buildDir)
+        runTest(studentDir + '/' + buildDir, logName)
+        parseRes = parseLog(studentDir + '/' + buildDir, logName)
+        genJson(jsonFile, parseRes)
         clear()
-        return status
-    runTest(studentDir + '/' + buildDir, logName)
-    parseRes = parseLog(studentDir + '/' + buildDir, logName)
-    genJson(jsonFile, parseRes)
-    clear()
+    except RuntimeError:
+        print('Exception caught')
+        run('rm -rf ' + base + '/' + studentDir + ' ' + base + '/' + testDir)
+        clear()
+        return 1
     return 0
 
 main()
