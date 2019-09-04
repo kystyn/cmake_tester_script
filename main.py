@@ -7,10 +7,15 @@ import sys
 All paths here, excepting `buildDir` and logName,
 are relative to script directory.
 `buildDir` is relative to source code directory.
-`logName` is relative to executable directory.
+`logыName` is relative to executable directory.
 '''
+
+base = ''
+
 testAddr = 'https://github.com/kystyn/cmake_tester.git'
-testDir = 'test'
+baseTestDir = 'test'
+testDir = 'tests'
+testingUtilDir = 'util'
 
 studentDir = 'student'
 
@@ -23,6 +28,7 @@ packageName = 'lesson'
 
 logName = 'log.txt'
 jsonFile = 'results.json'
+
 
 branch = 'master'
 
@@ -42,7 +48,7 @@ ARGUMENTS:
 RETURNS: None
 '''
 def updateRepo( repoAddress, repoDir, revision = '' ):
-    base = os.path.abspath(os.curdir)
+    global base
     if not os.path.exists(repoDir):
         os.mkdir(repoDir)
         os.chdir(repoDir)
@@ -68,7 +74,7 @@ RETURNS:
     return code of build
 '''
 def build( root, target ):
-    base = os.path.abspath(os.curdir)
+    global base
     os.chdir(root)
     if not os.path.exists(target):
         os.mkdir(target)
@@ -85,9 +91,17 @@ ARGUMENTS: None
 RETURNS: None
 '''
 def includeTests():
-    base = os.path.abspath(os.curdir)
-    cmakefile = open(studentDir + '/CMakeLists.txt', 'a')
-    cmakefile.write('include(' + base + '/' + testDir + '/CMakeLists.txt)')
+    global base
+    cmakefile = open(baseTestDir + '/' + testingUtilDir + '/CMakeLists.txt', 'a')
+    studcmakefile = open(studentDir + '/CMakeLists.txt', 'r')
+    for s in studcmakefile:
+        idx = s.find('project')
+        if idx != -1:
+            projname = s[idx + 8 : s.find(')')]
+            break
+    cmakefile.write('set(STUDPROJNAME ' + projname + ')\n')
+    cmakefile.write('include(' + base + '/' + baseTestDir + '/' + testDir + '/CMakeLists.txt)')
+    studcmakefile.close()
     cmakefile.close()
 
 '''
@@ -96,12 +110,12 @@ ARGUMENTS: None
 RETURNS: None
 '''
 def clear():
-    base = os.path.abspath(os.curdir)
-    if os.path.exists(studentDir):
-        os.chdir(studentDir)
+    global base
+    if os.path.exists(base + '/' + studentDir):
+        os.chdir(base + '/' + studentDir)
         run("git stash")
-    if os.path.exists(base + '/' + testDir):
-        os.chdir(base + '/' + testDir)
+    if os.path.exists(base + '/' + baseTestDir + '/' + testDir):
+        os.chdir(base + '/' + baseTestDir + '/' + testDir)
         run("git stash")
     os.chdir(base)
 
@@ -117,7 +131,7 @@ ARGUMENTS:
 RETURNS: None
 '''
 def runTest( pathToExecutable, logName ):
-    base = os.path.abspath(os.curdir)
+    global base
     os.chdir(pathToExecutable)
     run("ctest -O " + logName, sendException = False)
     os.chdir(base)
@@ -135,9 +149,9 @@ RETURNS:
     list:
         1) dictionary: (test name -> pass status (True/False))
         2) list of nested exceptions 
-'''
+    '''
 def parseLog( pathToExecutable, logName ):
-    base = os.path.abspath(os.curdir)
+    global base
     os.chdir(pathToExecutable)
     log = open(logName, 'rt')
 
@@ -172,6 +186,7 @@ ARGUMENTS:
 RETURNS: None
 '''
 def genJson( fileName, parseRes ):
+    global base
     outJson = {"data": []}
     outF = open(fileName, 'wt')
 
@@ -207,26 +222,28 @@ RETURNS:
     1 if failed compilation.
 '''
 def main():
+    global base
     try:
         base = os.path.abspath(os.curdir)
         if len(sys.argv) < 2:
             raise RuntimeError
         studentAddr = sys.argv[1]
-        updateRepo(testAddr, testDir)
+        updateRepo(testAddr, baseTestDir)
         if len(sys.argv) == 3:
             updateRepo(studentAddr, studentDir, sys.argv[2])
         else:
             updateRepo(studentAddr, studentDir)
         includeTests()
         build(studentDir, buildDir)
-        runTest(studentDir + '/' + buildDir, logName)
-        parseRes = parseLog(studentDir + '/' + buildDir, logName)
+        build(baseTestDir + '/' + testingUtilDir, buildDir)
+        runTest(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
+        parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
         genJson(jsonFile, parseRes)
         clear()
     except RuntimeError:
-        print('Exception caught')
-        run('rm -rf ' + base + '/' + studentDir + ' ' + base + '/' + testDir)
+        print('Exception caught ')
         clear()
+        run('rm -rf ' + base + '/' + studentDir + ' ' + base + '/' + baseTestDir)
         return 1
     return 0
 
