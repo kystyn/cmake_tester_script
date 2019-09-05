@@ -133,7 +133,7 @@ RETURNS: None
 def runTest( pathToExecutable, logName ):
     global base
     os.chdir(pathToExecutable)
-    run("ctest -O " + logName, sendException = False)
+    run("ctest --output-on-failure -O " + logName, sendException = False)
     os.chdir(base)
 
 '''
@@ -158,6 +158,7 @@ def parseLog( pathToExecutable, logName ):
     testNo = 1
     testRes = {}
     nestedException = []
+    curTestRes = False
     for string in log:
         found = string.find('Test #' + str(testNo))
         if found != -1:
@@ -169,8 +170,11 @@ def parseLog( pathToExecutable, logName ):
                 curTestRes = True
             else:
                 curTestRes = False
-                nestedException.append(''.join([splittedStr[i] + ' ' for i in range(5, len(splittedStr))]))
+
+
             testRes.update({curTestName: curTestRes})
+        if curTestRes is False and string.find('BAD') != -1:
+            nestedException.append(string)
 
     os.chdir(base)
     return [testRes, nestedException]
@@ -240,7 +244,7 @@ def main():
         parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
         genJson(jsonFile, parseRes)
         clear()
-    except RuntimeError:
+    except:# RuntimeError:
         print('Exception caught ')
         clear()
         run('rm -rf ' + base + '/' + studentDir + ' ' + base + '/' + baseTestDir)

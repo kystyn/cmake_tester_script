@@ -8,8 +8,11 @@
             ],
             "results": [
                 {
-                    "status": "SUCCESSFUL",
-                    "failure": null
+                    "status": "FAILED",
+                    "failure": {
+                        "@class": "org.jetbrains.research.runner.data.UnknownFailureDatum",
+                        "nestedException": "BAD: Too many bad pixels: 1036800 BAD: Too big MSE: 11880.5\n"
+                    }
                 }
             ]
         },
@@ -21,49 +24,10 @@
             ],
             "results": [
                 {
-                    "status": "SUCCESSFUL",
-                    "failure": null
-                }
-            ]
-        },
-        {
-            "packageName": "lesson",
-            "methodName": "ThirdTest",
-            "tags": [
-                "Easy"
-            ],
-            "results": [
-                {
-                    "status": "SUCCESSFUL",
-                    "failure": null
-                }
-            ]
-        },
-        {
-            "packageName": "lesson",
-            "methodName": "Test4",
-            "tags": [
-                "Hard"
-            ],
-            "results": [
-                {
-                    "status": "SUCCESSFUL",
-                    "failure": null
-                }
-            ]
-        },
-        {
-            "packageName": "lesson",
-            "methodName": "Test5",
-            "tags": [
-                "Impossible"
-            ],
-            "results": [
-                {
                     "status": "FAILED",
                     "failure": {
                         "@class": "org.jetbrains.research.runner.data.UnknownFailureDatum",
-                        "nestedException": "Required regular expression not found.Regex=[Error! "
+                        "nestedException": "BAD: Too many bad pixels: 1036800 BAD: Too big MSE: 11880.5\n"
                     }
                 }
             ]
