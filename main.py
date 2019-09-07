@@ -117,6 +117,9 @@ def clear():
     if os.path.exists(base + '/' + baseTestDir + '/' + testDir):
         os.chdir(base + '/' + baseTestDir + '/' + testDir)
         run("git stash")
+    if os.path.exists(base + '/' + baseTestDir + '/' + testingUtilDir):
+        os.chdir(base + '/' + baseTestDir + '/' + testingUtilDir)
+        run("git stash")
     os.chdir(base)
 
 '''
