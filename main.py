@@ -7,7 +7,7 @@ import sys
 All paths here, excepting `buildDir` and logName,
 are relative to script directory.
 `buildDir` is relative to source code directory.
-`logыName` is relative to executable directory.
+`logName` is relative to executable directory.
 '''
 
 base = ''
@@ -153,7 +153,7 @@ RETURNS:
         1) dictionary: (test name -> pass status (True/False))
         2) list of nested exceptions 
     '''
-def parseLog( pathToExecutable, logName ):
+def parseLog(pathToExecutable, logName, passedTestsCnt = -1):
     global base
     os.chdir(pathToExecutable)
     log = open(logName, 'rt')
@@ -162,22 +162,28 @@ def parseLog( pathToExecutable, logName ):
     testRes = {}
     nestedException = []
     curTestRes = False
+    foundTests = 0
+    ready = False
     for string in log:
         found = string.find('Test #' + str(testNo))
         if found != -1:
+            foundTests += 1
             testNo += 1
             splittedStr = string.split()
             curTestName = splittedStr[3]
 
             if string.find('Passed') != -1:
                 curTestRes = True
+                ready = foundTests == passedTestsCnt
             else:
                 curTestRes = False
 
-
             testRes.update({curTestName: curTestRes})
         if curTestRes is False and string.find('BAD') != -1:
+            ready = foundTests == passedTestsCnt
             nestedException.append(string)
+        if ready:
+            break
 
     os.chdir(base)
     return [testRes, nestedException]
@@ -232,19 +238,29 @@ def main():
     global base
     try:
         base = os.path.abspath(os.curdir)
-        if len(sys.argv) < 2:
-            raise RuntimeError
-        studentAddr = sys.argv[1]
         updateRepo(testAddr, baseTestDir)
-        if len(sys.argv) == 3:
-            updateRepo(studentAddr, studentDir, sys.argv[2])
+        if "-src" not in sys.argv:
+            raise RuntimeError
+        studentAddr = sys.argv[sys.argv.index("-src") + 1]
+        updateRepo(testAddr, baseTestDir)
+        if "-v" in sys.argv:
+            num = sys.argv.index("-v");
+            updateRepo(studentAddr, studentDir, sys.argv[num + 1])
         else:
             updateRepo(studentAddr, studentDir)
+
         includeTests()
         build(studentDir, buildDir)
         build(baseTestDir + '/' + testingUtilDir, buildDir)
         runTest(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
-        parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
+        if "-tc" in sys.argv:
+            num = sys.argv.index("-tc");
+            passedTestCnt = int(sys.argv[num + 1])
+            parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir,
+                                logName, passedTestCnt)
+        else:
+            parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir,
+                                logName)
         genJson(jsonFile, parseRes)
         clear()
     except:# RuntimeError:
