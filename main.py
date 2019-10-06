@@ -29,13 +29,14 @@ packageName = 'lesson'
 logName = 'log.txt'
 jsonFile = 'results.json'
 
-
 branch = 'master'
 
-def run( command, sendException = True ):
-    status = subprocess.run([command], shell = True)
+
+def run(command, sendException=True):
+    status = subprocess.run([command], shell=True)
     if status.returncode != 0 and sendException:
         raise RuntimeError
+
 
 '''
 Update (or init, if wasn't) repository function.
@@ -47,7 +48,9 @@ ARGUMENTS:
         repoDir
 RETURNS: None
 '''
-def updateRepo( repoAddress, repoDir, revision = '' ):
+
+
+def updateRepo(repoAddress, repoDir, revision=''):
     global base
     if not os.path.exists(repoDir):
         os.mkdir(repoDir)
@@ -59,6 +62,7 @@ def updateRepo( repoAddress, repoDir, revision = '' ):
     run("git pull origin " + branch)
     run("git checkout " + revision)
     os.chdir(base)
+
 
 # root and is relative to current file
 '''
@@ -73,7 +77,9 @@ ARGUMENTS:
 RETURNS:
     return code of build
 '''
-def build( root, target ):
+
+
+def build(root, target):
     global base
     os.chdir(root)
     if not os.path.exists(target):
@@ -84,12 +90,15 @@ def build( root, target ):
     subprocess.run(generator)
     os.chdir(base)
 
+
 '''
 Edit CMakeLists file of student due to include tests function.
 Includes testDir/CMakeLists.txt into the end of studentDir/CMakeLists.txt
 ARGUMENTS: None
 RETURNS: None
 '''
+
+
 def includeTests():
     global base
     cmakefile = open(baseTestDir + '/' + testingUtilDir + '/CMakeLists.txt', 'a')
@@ -97,18 +106,21 @@ def includeTests():
     for s in studcmakefile:
         idx = s.find('project')
         if idx != -1:
-            projname = s[idx + 8 : s.find(')')]
+            projname = s[idx + 8: s.find(')')]
             break
     cmakefile.write('set(STUDPROJNAME ' + projname + ')\n')
     cmakefile.write('include(' + base + '/' + baseTestDir + '/' + testDir + '/CMakeLists.txt)')
     studcmakefile.close()
     cmakefile.close()
 
+
 '''
 stash changes in the test and student repo function.
 ARGUMENTS: None
 RETURNS: None
 '''
+
+
 def clear():
     global base
     if os.path.exists(base + '/' + studentDir):
@@ -122,6 +134,7 @@ def clear():
         run("git stash")
     os.chdir(base)
 
+
 '''
 Run ctest function.
 ARGUMENTS:
@@ -133,11 +146,14 @@ ARGUMENTS:
         logName
 RETURNS: None
 '''
-def runTest( pathToExecutable, logName ):
+
+
+def runTest(pathToExecutable, logName):
     global base
     os.chdir(pathToExecutable)
-    run("ctest --output-on-failure -O " + logName, sendException = False)
+    run("ctest --output-on-failure -O " + logName, sendException=False)
     os.chdir(base)
+
 
 '''
 Parse log file function.
@@ -153,7 +169,9 @@ RETURNS:
         1) dictionary: (test name -> pass status (True/False))
         2) list of nested exceptions 
     '''
-def parseLog(pathToExecutable, logName, passedTestsCnt = -1):
+
+
+def parseLog(pathToExecutable, logName, passedTestsCnt=-1):
     global base
     os.chdir(pathToExecutable)
     log = open(logName, 'rt')
@@ -188,6 +206,7 @@ def parseLog(pathToExecutable, logName, passedTestsCnt = -1):
     os.chdir(base)
     return [testRes, nestedException]
 
+
 # parseRes == [testRes, nestedException]
 '''
 Generate output JSON file function.
@@ -198,7 +217,9 @@ ARGUMENTS:
         parseRes
 RETURNS: None
 '''
-def genJson( fileName, parseRes ):
+
+
+def genJson(fileName, parseRes):
     global base
     outJson = {"data": []}
     outF = open(fileName, 'wt')
@@ -224,8 +245,9 @@ def genJson( fileName, parseRes ):
         }
         failMsgNum += int(not testRes[1])
         outJson['data'].append(str)
-    outF.write(json.dumps(outJson, indent = 4))
+    outF.write(json.dumps(outJson, indent=4))
     outF.close()
+
 
 '''
 Main program function.
@@ -234,6 +256,8 @@ RETURNS:
     0 if success,
     1 if failed compilation.
 '''
+
+
 def main():
     global base
     try:
@@ -242,7 +266,6 @@ def main():
         if "-src" not in sys.argv:
             raise RuntimeError
         studentAddr = sys.argv[sys.argv.index("-src") + 1]
-        updateRepo(testAddr, baseTestDir)
         if "-v" in sys.argv:
             num = sys.argv.index("-v");
             updateRepo(studentAddr, studentDir, sys.argv[num + 1])
@@ -254,7 +277,7 @@ def main():
         build(baseTestDir + '/' + testingUtilDir, buildDir)
         runTest(baseTestDir + '/' + testingUtilDir + '/' + buildDir, logName)
         if "-tc" in sys.argv:
-            num = sys.argv.index("-tc");
+            num = sys.argv.index("-tc")
             passedTestCnt = int(sys.argv[num + 1])
             parseRes = parseLog(baseTestDir + '/' + testingUtilDir + '/' + buildDir,
                                 logName, passedTestCnt)
@@ -263,11 +286,12 @@ def main():
                                 logName)
         genJson(jsonFile, parseRes)
         clear()
-    except:# RuntimeError:
+    except:  # RuntimeError:
         print('Exception caught ')
         clear()
         run('rm -rf ' + base + '/' + studentDir + ' ' + base + '/' + baseTestDir)
         return 1
     return 0
+
 
 main()
