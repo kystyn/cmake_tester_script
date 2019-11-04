@@ -197,7 +197,7 @@ def parseLog(pathToExecutable, logName, passedTestsCnt=-1):
                 curTestRes = False
 
             testRes.update({curTestName: curTestRes})
-        if curTestRes is False and string.find('BAD') != -1:
+        if curTestRes is False and string.upper().find('BAD') != -1:
             ready = foundTests == passedTestsCnt
             nestedException.append(string)
         if ready:
